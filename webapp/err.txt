@@ -1,0 +1,10 @@
+in sendnotifications
+52 select u.phonenumber, u.username from users u, ( SELECT resumes.* FROM smartjobdb.listings as jobs, smartjobdb.listings as resumes  where jobs.sid = 52 and resumes.listing_type_sid=7 and
+( resumes.TotalYearsExperience  is NULL or resumes.TotalYearsExperience ="" or resumes.totalYearsExperience between jobs.TotalYearsExperience - 2 and jobs.TotalYearsExperience + 2)
+and ( resumes.Location_State is NULL or resumes.Location_State = "" or resumes.Location_State = jobs.Location_State )
+and (resumes.Location_District is NULL or resumes.Location_District = "" or resumes.Location_District = jobs.Location_District )
+and (jobs.JobCategory is NULL  or jobs.JobCategory = "" or stringIntersect(jobs.JobCategory, resumes.JobCategory) = TRUE )
+and (jobs.Occupations is NULL  or jobs.Occupations = "" or stringIntersect(jobs.Occupations, resumes.Occupations) = TRUE )
+ ) as matchingresumes
+where u.sid = matchingresumes.user_sid
+ no matching results found

@@ -1,0 +1,49 @@
+CREATE FUNCTION SPLIT_STR(
+  X VARCHAR(255),
+  delim VARCHAR(12),
+  pos INT
+)
+RETURNS VARCHAR(255)
+RETURN REPLACE(SUBSTRING(SUBSTRING_INDEX(X, delim, pos),
+       LENGTH(SUBSTRING_INDEX(X, delim, pos -1)) + 1),
+       delim, '');
+
+
+
+
+
+
+DELIMITER $$
+CREATE FUNCTION stringSetIntersect(fullstr VARCHAR(20),fullstr1 VARCHAR(20))
+RETURNS BOOLEAN 
+DETERMINISTIC 
+BEGIN 
+      DECLARE a INT DEFAULT 0 ;
+      DECLARE str VARCHAR(255);
+      DECLARE a1 INT DEFAULT 0 ;
+      DECLARE str1 VARCHAR(255);
+      DECLARE tempstr VARCHAR(255);
+      simple_loop: LOOP
+         SET a=a+1;
+         SET str=SPLIT_STR(fullstr,",",a);
+         IF str='' THEN
+            LEAVE simple_loop;
+         END IF;    
+         INSERT INTO str1 VALUES(str);
+         SET tempstr=fullstr1;    
+         SET a1=0;
+         SET str1='';
+         loop2: LOOP
+			SET a1=a1+1;
+			SET str1=SPLIT_STR(tempstr,",",a1);
+			IF str1='' THEN
+			LEAVE loop2;
+			END IF;
+			INSERT INTO str2 VALUES(str1);
+			IF STRCMP(str,str1)=0 THEN
+			RETURN TRUE;
+			END IF; 
+		END LOOP loop2;
+    END LOOP simple_loop;
+         RETURN FALSE;
+END;$$

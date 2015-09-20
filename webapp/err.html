@@ -1,0 +1,802 @@
+sent data, result is <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-US" lang="en-US">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>SmartJobBoard Admin Panel  :: Import Users </title>
+
+	<link rel="StyleSheet" type="text/css" href="http://localhost/rozgarmela/admin/../templates/_system/admin/main/images/design.css" />
+	    <link type="text/css" href="http://localhost/rozgarmela/system/ext/jquery/themes/green/jquery-ui-1.7.2.custom.css" rel="stylesheet" />
+    <link rel="stylesheet" type="text/css" href="http://localhost/rozgarmela/admin/../templates/_system/admin/main/images/jquery-ui-1.8.custom.css" />
+	<link type="text/css" href="http://localhost/rozgarmela/system/ext/jquery/css/jquery-ui.css" rel="stylesheet" />
+	<link rel="stylesheet" type="text/css" href="http://localhost/rozgarmela/system/ext/jquery/css/jquery.multiselect.css" />
+	<script language="JavaScript" type="text/javascript" src="http://localhost/rozgarmela/templates/_system/common_js/main.js"></script>
+	<script language="JavaScript" type="text/javascript" src="http://localhost/rozgarmela/system/ext/jquery/jquery.js"></script>
+    <script language="JavaScript" type="text/javascript" src="http://localhost/rozgarmela/system/ext/jquery/jquery-ui.js"></script>
+	<script language="JavaScript" type="text/javascript" src="http://localhost/rozgarmela/system/ext/jquery/jquery.form.js"></script>
+	<script language="JavaScript" type="text/javascript" src="http://localhost/rozgarmela/templates/_system/common_js/autoupload_functions.js"></script>
+	<script language="JavaScript" type="text/javascript" src="http://localhost/rozgarmela/system/ext/jquery/jquery.bgiframe.js"></script>
+	<script language="JavaScript" type="text/javascript" src="http://localhost/rozgarmela/system/ext/jquery/multilist/jquery.multiselect.min.js"></script>
+	<script language="JavaScript" type="text/javascript" src="http://localhost/rozgarmela/templates/_system/common_js/multilist_functions.js"></script>
+	<script language="JavaScript" type="text/javascript" src="http://localhost/rozgarmela/templates/_system/common_js/floatnumbers_functions.js"></script>
+	    <script language="JavaScript" type="text/javascript">
+
+		// Set global javascript value for page
+		window.SJB_GlobalSiteUrl = 'http://localhost/rozgarmela/admin';
+		window.SJB_AdminSiteUrl  = 'http://localhost/rozgarmela/admin';
+		window.SJB_UserSiteUrl   = 'http://localhost/rozgarmela';
+
+		currentSjbVersion = {
+			major: "4",
+			minor: "2",
+			build: "9822"
+		};
+
+		$(document).ready(function() {
+			// create special service block on page, if not exists
+			var n = $("#updateInfoBlockDashboard").length;
+			if (n == 0) {
+				$("body").append("<div id=\"updateInfoBlockDashboard\" style=\"display:none;\"></div>");
+			}
+
+			// check for availabled SJB updates
+			$.getJSON(window.SJB_AdminSiteUrl + "/system/miscellaneous/update_check/", function(data) {
+				$('#updateProgress').hide();
+				if (data.updateStatus == 'available' && !data.closed_by_user) {
+					$("#updateInfoBlock").show("slide", { direction: "up"}, 500);
+				}
+
+				switch (data.updateStatus) {
+					case 'available':
+						var updateVersion = data.availableVersion.major + "." + data.availableVersion.minor + " build " + data.availableVersion.build;
+						$("#updateInfoBlockDashboard").html(updateVersion);
+						$("#updateButtonBlockDashboard").html(
+							'<form style="text-align: center;" name="update_to_version_form" method="post" action="http://localhost/rozgarmela/admin/update-to-new-version/">' +
+								'<input type="submit" name="go_to_update_page" value="Update to version ' + updateVersion + '" />' +
+							'</form>'
+						);
+						break;
+
+					case 'deprecated':
+						$('#updateDeprecated').show();
+						break;
+
+					case 'none':
+						$('#updateNone').show();
+						break;
+
+					default:
+						$('#updateError').show();
+						break;
+				}
+			});
+
+			$("#closeUpdateInfoBlock").click(function() {
+				$("#updateInfoBlock").hide("slide", { direction: "up"}, 500);
+				$.post(window.SJB_AdminSiteUrl + "/system/miscellaneous/update_check/", { action: "mark_as_closed"});
+			});
+		});
+
+		$.extend($.ui.dialog.prototype.options, {
+			modal: true
+		});
+
+		function popUpWindow(url, widthWin, heightWin, title, iframe, callbackFunction) {
+			$("#messageBox").dialog('destroy').html('<img style=\"vertical-align: middle;\" src=\"http://localhost/rozgarmela/system/ext/jquery/progbar.gif\" alt=\"Please wait ...\" /> Please wait ...');
+			$("#messageBox").dialog({
+				width: widthWin,
+				height: heightWin,
+				modal: true,
+				title: title,
+				close: function(event, ui) {
+					if (callbackFunction) {
+						callbackFunction();
+					}
+				}
+			}).dialog('open');
+			if (iframe) {
+				$("#messageBox").html('<iframe border="0" runat="server" width="100%" height="100%" frameborder="0" src="'+url+'"></iframe>');
+			} else {
+				$.get(url, function(data) {
+					$("#messageBox").html(data);
+				});
+			}
+			return false;
+		}
+
+		function popUpMessageWindow(widthWin, heightWin, title, message) {
+			$("#messageBox").dialog("destroy" ).html(message);
+			$("#messageBox").dialog({
+				width: widthWin,
+				height: heightWin,
+				title: title
+			}).dialog("open");
+			return false;
+		}
+	</script>
+</head><body>
+		<table border="0" cellpadding="0" cellspacing="0" width="100%" id="structure"  height="100%">
+		<tr>
+			<td id="left" valign="top" height="100%">
+				<div id="leftHeader" style="text-align:right">
+					<a href="http://localhost/rozgarmela" id="logoLink"></a>
+                    <span class="packageVersion">version 4.2 build 9822</span>
+				</div>
+				<div class="clr"><br/></div>
+								<script language="JavaScript" type="text/javascript">
+	function trim(str)
+	{
+		while (str.substring(0, 1) == " ")
+			str = str.substring(1, str.length);
+		while (str.substring(str.length, 1) == " ")
+			str = str.substr(0, str.length - 1);
+		return str;
+	}
+
+	function get_cookie(rname)
+	{
+		var tmp = "" + document.cookie;
+		var result = "";
+		while (tmp.length) {
+			splitter = tmp.indexOf(";");
+			if (splitter < 0)
+				splitter = tmp.length + 1;
+			subject = tmp.substring(0, splitter);
+			if (decodeURIComponent(trim(subject.substring(0, subject.indexOf('=')))) == rname)
+				result = subject.substring(subject.indexOf('=') + 1, subject.length);
+			tmp = tmp.substring(splitter + 1, tmp.length);
+		}
+		return result;
+	}
+
+	function set_cookie(name, value)
+	{
+		document.cookie = encodeURIComponent(name) + "=" + encodeURIComponent(value) + "; path=/;";
+	}
+
+	function Show(cur_id)
+	{
+		set_cookie(cur_id, 'v');
+		document.getElementById('v' + cur_id).style.display = 'block';
+			document.getElementById('s' + cur_id).innerHTML = "<img src='http://localhost/rozgarmela/admin/../templates/_system/admin/main/images/menu_opened.png' style='margin-top:13px;' border='0' alt=''/>&nbsp;";
+		document.getElementById('ImgId' + cur_id).className = "leftMenuOpen";
+	}
+
+	function highlight_menu_title(title_id)
+	{
+		document.getElementById(title_id).style.color = '#fffff';
+	}
+
+	function Hide(cur_id)
+	{
+		set_cookie(cur_id, 'h');
+		document.getElementById('v' + cur_id).style.display = 'none';
+			document.getElementById('s' + cur_id).innerHTML = "<img src='http://localhost/rozgarmela/admin/../templates/_system/admin/main/images/menu_closed.png' style='margin-top:13px' border='0' alt=''/>&nbsp;";
+		document.getElementById('ImgId' + cur_id).className = "leftMenu";
+	}
+
+	function ShowHide(cur_id, obj)
+	{
+		if (document.getElementById('v' + cur_id).style.display != 'none') {
+			Hide(cur_id);
+			$(obj).removeClass('leftMenuOpen');
+			$(obj).addClass('leftMenu');
+		} else {
+			Show(cur_id);
+			$(obj).removeClass('leftMenu');
+			$(obj).addClass('leftMenuOpen');
+		}
+	}
+
+	function Restore(cur_id, hide_def)
+	{
+		if (get_cookie(cur_id) == 'h')
+			Hide(cur_id);
+		else if (get_cookie(cur_id) == 'v')
+			Show(cur_id);
+		else {
+			if (hide_def)
+				Hide(cur_id);
+			else
+				Show(cur_id);
+		}
+	}
+</script>
+
+	<div onclick="ShowHide('Listing_Configuration', this)" id="ImgIdListing_Configuration" class="leftMenu">
+		<span id="stListing_Configuration" class="menuName"><span class="borders">Listing Configuration</span></span>
+		<span id="sListing_Configuration" class="menuArrow"></span>
+	</div>
+
+	<div id="vListing_Configuration">
+		<div class="menuItems">
+												<div class="lmsi"><a href="http://localhost/rozgarmela/admin/listing-fields/">Common Fields</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/listing-types/">Listing Types</a></div>
+																							</div>
+	</div>
+		<script type="text/javascript">Restore('Listing_Configuration',true); </script>
+		<div onclick="ShowHide('Listing_Management', this)" id="ImgIdListing_Management" class="leftMenu">
+		<span id="stListing_Management" class="menuName"><span class="borders">Listing Management</span></span>
+		<span id="sListing_Management" class="menuArrow"></span>
+	</div>
+
+	<div id="vListing_Management">
+		<div class="menuItems">
+												<div class="lmsi"><a href="http://localhost/rozgarmela/admin/manage-resumes/">Manage Resumes</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/manage-jobs/">Manage Jobs</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/import-listings/">Import Listings</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/export-listings/">Export Listings</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/listing-feeds/">XML Feeds</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/show-import/">XML Import</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/flagged-listings/">Flagged Listings</a></div>
+																							</div>
+	</div>
+		<script type="text/javascript">Restore('Listing_Management',true); </script>
+		<div onclick="ShowHide('Users', this)" id="ImgIdUsers" class="leftMenu">
+		<span id="stUsers" class="menuName"><span class="borders">Users</span></span>
+		<span id="sUsers" class="menuArrow"></span>
+	</div>
+
+	<div id="vUsers">
+		<div class="menuItems">
+												<div class="lmsi"><a href="http://localhost/rozgarmela/admin/user-groups/">User Groups</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/manage-users/jobseeker/">Manage Job Seekers</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/manage-users/employer/">Manage Employers</a></div>
+																<div class="lmsih"><a href="http://localhost/rozgarmela/admin/import-users/">Import Users</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/export-users/">Export Users</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/mailing/">Mass Mailing</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/guest-alerts/">Guest Email Alerts</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/banned-ips/">Banned IPs</a></div>
+																							</div>
+	</div>
+		<script type="text/javascript">Restore('Users',true); </script>
+	<script type="text/javascript">Show('Users')</script>	<div onclick="ShowHide('Layout_and_Content', this)" id="ImgIdLayout_and_Content" class="leftMenu">
+		<span id="stLayout_and_Content" class="menuName"><span class="borders">Layout and Content</span></span>
+		<span id="sLayout_and_Content" class="menuArrow"></span>
+	</div>
+
+	<div id="vLayout_and_Content">
+		<div class="menuItems">
+												<div class="lmsi"><a href="http://localhost/rozgarmela/admin/form-builders/">Form Builder</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/edit-templates/">System Templates</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/edit-email-templates/">Email Templates</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/edit-themes/">Themes</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/user-pages/">Site Pages</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/stat-pages/">Static Content</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/manage-banner-groups/">Banners</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/news-categories/">News</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/manage-polls/">Polls</a></div>
+																							</div>
+	</div>
+		<script type="text/javascript">Restore('Layout_and_Content',true); </script>
+		<div onclick="ShowHide('Billing', this)" id="ImgIdBilling" class="leftMenu">
+		<span id="stBilling" class="menuName"><span class="borders">Billing</span></span>
+		<span id="sBilling" class="menuArrow"></span>
+	</div>
+
+	<div id="vBilling">
+		<div class="menuItems">
+												<div class="lmsi"><a href="http://localhost/rozgarmela/admin/manage-invoices/">Invoices</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/products/">Products</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/promotions/">Promotions</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/manage-taxes/">Tax Rules</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/system/payment/gateways/">Payment Gateways</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/payments/">Transaction History</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/payment-log/">Payment Log</a></div>
+																							</div>
+	</div>
+		<script type="text/javascript">Restore('Billing',true); </script>
+		<div onclick="ShowHide('Reports', this)" id="ImgIdReports" class="leftMenu">
+		<span id="stReports" class="menuName"><span class="borders">Reports</span></span>
+		<span id="sReports" class="menuArrow"></span>
+	</div>
+
+	<div id="vReports">
+		<div class="menuItems">
+												<div class="lmsi"><a href="http://localhost/rozgarmela/admin/general-statistics/">General Statistics</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/listings-statistics/">Listings</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/applications-and-views/">Applications and Views</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/sales/">Sales</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/statistics/guest-alerts/">Guest Alerts</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/statistics/promotions/">Promotions Usage</a></div>
+																							</div>
+	</div>
+		<script type="text/javascript">Restore('Reports',true); </script>
+		<div onclick="ShowHide('System_Configuration', this)" id="ImgIdSystem_Configuration" class="leftMenu">
+		<span id="stSystem_Configuration" class="menuName"><span class="borders">System Configuration</span></span>
+		<span id="sSystem_Configuration" class="menuArrow"></span>
+	</div>
+
+	<div id="vSystem_Configuration">
+		<div class="menuItems">
+												<div class="lmsi"><a href="http://localhost/rozgarmela/admin/settings/">System Settings</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/social-media/">Social Media</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/adminpswd/">Admin Password</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/manage-subadmins/">Admin Sub Accounts</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/geographic-data/">ZipCode Database</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/countries/">Countries</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/states/">States/Regions</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/currency-list/">Manage Currencies</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/refine-search-settings/">Refine Search Settings</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/flag-listing-settings/">Flag Listing Settings</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/manage-breadcrumbs/">Breadcrumbs Config</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/filters/">HTML filters</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/task-scheduler-settings/">Task Scheduler</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/system/miscellaneous/plugins/">Plugins</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/backup/">Backup/Restore</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/email-log/">Email Log</a></div>
+																							</div>
+	</div>
+		<script type="text/javascript">Restore('System_Configuration',true); </script>
+		<div onclick="ShowHide('Language_Management', this)" id="ImgIdLanguage_Management" class="leftMenu">
+		<span id="stLanguage_Management" class="menuName"><span class="borders">Language Management</span></span>
+		<span id="sLanguage_Management" class="menuArrow"></span>
+	</div>
+
+	<div id="vLanguage_Management">
+		<div class="menuItems">
+												<div class="lmsi"><a href="http://localhost/rozgarmela/admin/manage-languages/">Manage Languages</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/manage-phrases/">Translate Phrases</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/import-language/">Import Language</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/export-language/">Export Language</a></div>
+																							</div>
+	</div>
+		<script type="text/javascript">Restore('Language_Management',true); </script>
+	
+				<div class="clr"><br/></div>
+			</td>
+			<td valign="top" height="100%">
+				<div class="manual">
+					<a href="	
+					http://wiki.smartjobboard.com/display/sjb42/
+			" target="_blank">Help for this page <img src="http://localhost/rozgarmela/admin/../templates/_system/admin/main/images/question.png" border="0" class="helpicon" /> </a>
+					<form id="langSwitcherForm" method="get" action="">
+						<select name="lang" onchange="location.href='http://localhost/rozgarmela/admin/import-users/?lang='+this.value+'&amp;user_group_id=JobSeeker&amp;file_type=xls&amp;csv_delimiter=semicolon&amp;encodingFromCharset=UTF-8&amp;action=Import'" style="margin-top:5px; width: 200px;">
+													<option value="en" selected="selected">English</option>
+												</select>
+					</form>
+				</div>
+				<div id="messageBox"></div>
+
+				<div id="topGray">
+					<div id="updateInfoBlock">
+						<a href="http://localhost/rozgarmela/admin/update-to-new-version/">New update available</a>
+						<span id="closeUpdateInfoBlock">X</span>
+					</div>
+					<div id="breadCrumbs">
+						<a href="http://localhost/rozgarmela/admin/">Dashboard</a> &#187; <a href="?">Import Users</a>
+					</div>
+					<div id="topRight">
+						Welcome back, admin<br/>
+						<a href="http://localhost/rozgarmela/admin/">Dashboard</a> | <a href="http://localhost/rozgarmela/admin/system/users/logout/">Log out</a>
+					</div>
+					<div id="suggest-feature">
+						<a href="http://ideas.smartjobboard.com" target="_blank">Suggest a Feature</a>
+					</div>
+				</div>
+				
+				<div class="InContent">
+					<div style="margin: 0 215px 0 0">
+									
+					</div>
+					
+<h1>Import Users</h1>
+
+<p class="message">1 users were successfully imported.</p>
+					<div class="clr"><br/></div>
+				</div>
+			
+			</td>
+		</tr>
+		<tr>
+			<td colspan="2">
+				<div id="footer">
+					Copyright &copy; 2013 Powered by <a href="http://www.smartjobboard.com/">SmartJobBoard</a> &#124; <a href="http://wiki.smartjobboard.com/display/sjb42/SmartJobBoard+v4.2+User+Manual">User Manual</a>
+				</div>
+			</td>
+		</tr>
+	</table>
+	
+</body>
+</html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-US" lang="en-US">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>SmartJobBoard Admin Panel  :: Import Users </title>
+
+	<link rel="StyleSheet" type="text/css" href="http://localhost/rozgarmela/admin/../templates/_system/admin/main/images/design.css" />
+	    <link type="text/css" href="http://localhost/rozgarmela/system/ext/jquery/themes/green/jquery-ui-1.7.2.custom.css" rel="stylesheet" />
+    <link rel="stylesheet" type="text/css" href="http://localhost/rozgarmela/admin/../templates/_system/admin/main/images/jquery-ui-1.8.custom.css" />
+	<link type="text/css" href="http://localhost/rozgarmela/system/ext/jquery/css/jquery-ui.css" rel="stylesheet" />
+	<link rel="stylesheet" type="text/css" href="http://localhost/rozgarmela/system/ext/jquery/css/jquery.multiselect.css" />
+	<script language="JavaScript" type="text/javascript" src="http://localhost/rozgarmela/templates/_system/common_js/main.js"></script>
+	<script language="JavaScript" type="text/javascript" src="http://localhost/rozgarmela/system/ext/jquery/jquery.js"></script>
+    <script language="JavaScript" type="text/javascript" src="http://localhost/rozgarmela/system/ext/jquery/jquery-ui.js"></script>
+	<script language="JavaScript" type="text/javascript" src="http://localhost/rozgarmela/system/ext/jquery/jquery.form.js"></script>
+	<script language="JavaScript" type="text/javascript" src="http://localhost/rozgarmela/templates/_system/common_js/autoupload_functions.js"></script>
+	<script language="JavaScript" type="text/javascript" src="http://localhost/rozgarmela/system/ext/jquery/jquery.bgiframe.js"></script>
+	<script language="JavaScript" type="text/javascript" src="http://localhost/rozgarmela/system/ext/jquery/multilist/jquery.multiselect.min.js"></script>
+	<script language="JavaScript" type="text/javascript" src="http://localhost/rozgarmela/templates/_system/common_js/multilist_functions.js"></script>
+	<script language="JavaScript" type="text/javascript" src="http://localhost/rozgarmela/templates/_system/common_js/floatnumbers_functions.js"></script>
+	    <script language="JavaScript" type="text/javascript">
+
+		// Set global javascript value for page
+		window.SJB_GlobalSiteUrl = 'http://localhost/rozgarmela/admin';
+		window.SJB_AdminSiteUrl  = 'http://localhost/rozgarmela/admin';
+		window.SJB_UserSiteUrl   = 'http://localhost/rozgarmela';
+
+		currentSjbVersion = {
+			major: "4",
+			minor: "2",
+			build: "9822"
+		};
+
+		$(document).ready(function() {
+			// create special service block on page, if not exists
+			var n = $("#updateInfoBlockDashboard").length;
+			if (n == 0) {
+				$("body").append("<div id=\"updateInfoBlockDashboard\" style=\"display:none;\"></div>");
+			}
+
+			// check for availabled SJB updates
+			$.getJSON(window.SJB_AdminSiteUrl + "/system/miscellaneous/update_check/", function(data) {
+				$('#updateProgress').hide();
+				if (data.updateStatus == 'available' && !data.closed_by_user) {
+					$("#updateInfoBlock").show("slide", { direction: "up"}, 500);
+				}
+
+				switch (data.updateStatus) {
+					case 'available':
+						var updateVersion = data.availableVersion.major + "." + data.availableVersion.minor + " build " + data.availableVersion.build;
+						$("#updateInfoBlockDashboard").html(updateVersion);
+						$("#updateButtonBlockDashboard").html(
+							'<form style="text-align: center;" name="update_to_version_form" method="post" action="http://localhost/rozgarmela/admin/update-to-new-version/">' +
+								'<input type="submit" name="go_to_update_page" value="Update to version ' + updateVersion + '" />' +
+							'</form>'
+						);
+						break;
+
+					case 'deprecated':
+						$('#updateDeprecated').show();
+						break;
+
+					case 'none':
+						$('#updateNone').show();
+						break;
+
+					default:
+						$('#updateError').show();
+						break;
+				}
+			});
+
+			$("#closeUpdateInfoBlock").click(function() {
+				$("#updateInfoBlock").hide("slide", { direction: "up"}, 500);
+				$.post(window.SJB_AdminSiteUrl + "/system/miscellaneous/update_check/", { action: "mark_as_closed"});
+			});
+		});
+
+		$.extend($.ui.dialog.prototype.options, {
+			modal: true
+		});
+
+		function popUpWindow(url, widthWin, heightWin, title, iframe, callbackFunction) {
+			$("#messageBox").dialog('destroy').html('<img style=\"vertical-align: middle;\" src=\"http://localhost/rozgarmela/system/ext/jquery/progbar.gif\" alt=\"Please wait ...\" /> Please wait ...');
+			$("#messageBox").dialog({
+				width: widthWin,
+				height: heightWin,
+				modal: true,
+				title: title,
+				close: function(event, ui) {
+					if (callbackFunction) {
+						callbackFunction();
+					}
+				}
+			}).dialog('open');
+			if (iframe) {
+				$("#messageBox").html('<iframe border="0" runat="server" width="100%" height="100%" frameborder="0" src="'+url+'"></iframe>');
+			} else {
+				$.get(url, function(data) {
+					$("#messageBox").html(data);
+				});
+			}
+			return false;
+		}
+
+		function popUpMessageWindow(widthWin, heightWin, title, message) {
+			$("#messageBox").dialog("destroy" ).html(message);
+			$("#messageBox").dialog({
+				width: widthWin,
+				height: heightWin,
+				title: title
+			}).dialog("open");
+			return false;
+		}
+	</script>
+</head><body>
+		<table border="0" cellpadding="0" cellspacing="0" width="100%" id="structure"  height="100%">
+		<tr>
+			<td id="left" valign="top" height="100%">
+				<div id="leftHeader" style="text-align:right">
+					<a href="http://localhost/rozgarmela" id="logoLink"></a>
+                    <span class="packageVersion">version 4.2 build 9822</span>
+				</div>
+				<div class="clr"><br/></div>
+								<script language="JavaScript" type="text/javascript">
+	function trim(str)
+	{
+		while (str.substring(0, 1) == " ")
+			str = str.substring(1, str.length);
+		while (str.substring(str.length, 1) == " ")
+			str = str.substr(0, str.length - 1);
+		return str;
+	}
+
+	function get_cookie(rname)
+	{
+		var tmp = "" + document.cookie;
+		var result = "";
+		while (tmp.length) {
+			splitter = tmp.indexOf(";");
+			if (splitter < 0)
+				splitter = tmp.length + 1;
+			subject = tmp.substring(0, splitter);
+			if (decodeURIComponent(trim(subject.substring(0, subject.indexOf('=')))) == rname)
+				result = subject.substring(subject.indexOf('=') + 1, subject.length);
+			tmp = tmp.substring(splitter + 1, tmp.length);
+		}
+		return result;
+	}
+
+	function set_cookie(name, value)
+	{
+		document.cookie = encodeURIComponent(name) + "=" + encodeURIComponent(value) + "; path=/;";
+	}
+
+	function Show(cur_id)
+	{
+		set_cookie(cur_id, 'v');
+		document.getElementById('v' + cur_id).style.display = 'block';
+			document.getElementById('s' + cur_id).innerHTML = "<img src='http://localhost/rozgarmela/admin/../templates/_system/admin/main/images/menu_opened.png' style='margin-top:13px;' border='0' alt=''/>&nbsp;";
+		document.getElementById('ImgId' + cur_id).className = "leftMenuOpen";
+	}
+
+	function highlight_menu_title(title_id)
+	{
+		document.getElementById(title_id).style.color = '#fffff';
+	}
+
+	function Hide(cur_id)
+	{
+		set_cookie(cur_id, 'h');
+		document.getElementById('v' + cur_id).style.display = 'none';
+			document.getElementById('s' + cur_id).innerHTML = "<img src='http://localhost/rozgarmela/admin/../templates/_system/admin/main/images/menu_closed.png' style='margin-top:13px' border='0' alt=''/>&nbsp;";
+		document.getElementById('ImgId' + cur_id).className = "leftMenu";
+	}
+
+	function ShowHide(cur_id, obj)
+	{
+		if (document.getElementById('v' + cur_id).style.display != 'none') {
+			Hide(cur_id);
+			$(obj).removeClass('leftMenuOpen');
+			$(obj).addClass('leftMenu');
+		} else {
+			Show(cur_id);
+			$(obj).removeClass('leftMenu');
+			$(obj).addClass('leftMenuOpen');
+		}
+	}
+
+	function Restore(cur_id, hide_def)
+	{
+		if (get_cookie(cur_id) == 'h')
+			Hide(cur_id);
+		else if (get_cookie(cur_id) == 'v')
+			Show(cur_id);
+		else {
+			if (hide_def)
+				Hide(cur_id);
+			else
+				Show(cur_id);
+		}
+	}
+</script>
+
+	<div onclick="ShowHide('Listing_Configuration', this)" id="ImgIdListing_Configuration" class="leftMenu">
+		<span id="stListing_Configuration" class="menuName"><span class="borders">Listing Configuration</span></span>
+		<span id="sListing_Configuration" class="menuArrow"></span>
+	</div>
+
+	<div id="vListing_Configuration">
+		<div class="menuItems">
+												<div class="lmsi"><a href="http://localhost/rozgarmela/admin/listing-fields/">Common Fields</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/listing-types/">Listing Types</a></div>
+																							</div>
+	</div>
+		<script type="text/javascript">Restore('Listing_Configuration',true); </script>
+		<div onclick="ShowHide('Listing_Management', this)" id="ImgIdListing_Management" class="leftMenu">
+		<span id="stListing_Management" class="menuName"><span class="borders">Listing Management</span></span>
+		<span id="sListing_Management" class="menuArrow"></span>
+	</div>
+
+	<div id="vListing_Management">
+		<div class="menuItems">
+												<div class="lmsi"><a href="http://localhost/rozgarmela/admin/manage-resumes/">Manage Resumes</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/manage-jobs/">Manage Jobs</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/import-listings/">Import Listings</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/export-listings/">Export Listings</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/listing-feeds/">XML Feeds</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/show-import/">XML Import</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/flagged-listings/">Flagged Listings</a></div>
+																							</div>
+	</div>
+		<script type="text/javascript">Restore('Listing_Management',true); </script>
+		<div onclick="ShowHide('Users', this)" id="ImgIdUsers" class="leftMenu">
+		<span id="stUsers" class="menuName"><span class="borders">Users</span></span>
+		<span id="sUsers" class="menuArrow"></span>
+	</div>
+
+	<div id="vUsers">
+		<div class="menuItems">
+												<div class="lmsi"><a href="http://localhost/rozgarmela/admin/user-groups/">User Groups</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/manage-users/jobseeker/">Manage Job Seekers</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/manage-users/employer/">Manage Employers</a></div>
+																<div class="lmsih"><a href="http://localhost/rozgarmela/admin/import-users/">Import Users</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/export-users/">Export Users</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/mailing/">Mass Mailing</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/guest-alerts/">Guest Email Alerts</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/banned-ips/">Banned IPs</a></div>
+																							</div>
+	</div>
+		<script type="text/javascript">Restore('Users',true); </script>
+	<script type="text/javascript">Show('Users')</script>	<div onclick="ShowHide('Layout_and_Content', this)" id="ImgIdLayout_and_Content" class="leftMenu">
+		<span id="stLayout_and_Content" class="menuName"><span class="borders">Layout and Content</span></span>
+		<span id="sLayout_and_Content" class="menuArrow"></span>
+	</div>
+
+	<div id="vLayout_and_Content">
+		<div class="menuItems">
+												<div class="lmsi"><a href="http://localhost/rozgarmela/admin/form-builders/">Form Builder</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/edit-templates/">System Templates</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/edit-email-templates/">Email Templates</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/edit-themes/">Themes</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/user-pages/">Site Pages</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/stat-pages/">Static Content</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/manage-banner-groups/">Banners</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/news-categories/">News</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/manage-polls/">Polls</a></div>
+																							</div>
+	</div>
+		<script type="text/javascript">Restore('Layout_and_Content',true); </script>
+		<div onclick="ShowHide('Billing', this)" id="ImgIdBilling" class="leftMenu">
+		<span id="stBilling" class="menuName"><span class="borders">Billing</span></span>
+		<span id="sBilling" class="menuArrow"></span>
+	</div>
+
+	<div id="vBilling">
+		<div class="menuItems">
+												<div class="lmsi"><a href="http://localhost/rozgarmela/admin/manage-invoices/">Invoices</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/products/">Products</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/promotions/">Promotions</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/manage-taxes/">Tax Rules</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/system/payment/gateways/">Payment Gateways</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/payments/">Transaction History</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/payment-log/">Payment Log</a></div>
+																							</div>
+	</div>
+		<script type="text/javascript">Restore('Billing',true); </script>
+		<div onclick="ShowHide('Reports', this)" id="ImgIdReports" class="leftMenu">
+		<span id="stReports" class="menuName"><span class="borders">Reports</span></span>
+		<span id="sReports" class="menuArrow"></span>
+	</div>
+
+	<div id="vReports">
+		<div class="menuItems">
+												<div class="lmsi"><a href="http://localhost/rozgarmela/admin/general-statistics/">General Statistics</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/listings-statistics/">Listings</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/applications-and-views/">Applications and Views</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/sales/">Sales</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/statistics/guest-alerts/">Guest Alerts</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/statistics/promotions/">Promotions Usage</a></div>
+																							</div>
+	</div>
+		<script type="text/javascript">Restore('Reports',true); </script>
+		<div onclick="ShowHide('System_Configuration', this)" id="ImgIdSystem_Configuration" class="leftMenu">
+		<span id="stSystem_Configuration" class="menuName"><span class="borders">System Configuration</span></span>
+		<span id="sSystem_Configuration" class="menuArrow"></span>
+	</div>
+
+	<div id="vSystem_Configuration">
+		<div class="menuItems">
+												<div class="lmsi"><a href="http://localhost/rozgarmela/admin/settings/">System Settings</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/social-media/">Social Media</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/adminpswd/">Admin Password</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/manage-subadmins/">Admin Sub Accounts</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/geographic-data/">ZipCode Database</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/countries/">Countries</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/states/">States/Regions</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/currency-list/">Manage Currencies</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/refine-search-settings/">Refine Search Settings</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/flag-listing-settings/">Flag Listing Settings</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/manage-breadcrumbs/">Breadcrumbs Config</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/filters/">HTML filters</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/task-scheduler-settings/">Task Scheduler</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/system/miscellaneous/plugins/">Plugins</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/backup/">Backup/Restore</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/email-log/">Email Log</a></div>
+																							</div>
+	</div>
+		<script type="text/javascript">Restore('System_Configuration',true); </script>
+		<div onclick="ShowHide('Language_Management', this)" id="ImgIdLanguage_Management" class="leftMenu">
+		<span id="stLanguage_Management" class="menuName"><span class="borders">Language Management</span></span>
+		<span id="sLanguage_Management" class="menuArrow"></span>
+	</div>
+
+	<div id="vLanguage_Management">
+		<div class="menuItems">
+												<div class="lmsi"><a href="http://localhost/rozgarmela/admin/manage-languages/">Manage Languages</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/manage-phrases/">Translate Phrases</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/import-language/">Import Language</a></div>
+																<div class="lmsi"><a href="http://localhost/rozgarmela/admin/export-language/">Export Language</a></div>
+																							</div>
+	</div>
+		<script type="text/javascript">Restore('Language_Management',true); </script>
+	
+				<div class="clr"><br/></div>
+			</td>
+			<td valign="top" height="100%">
+				<div class="manual">
+					<a href="	
+					http://wiki.smartjobboard.com/display/sjb42/
+			" target="_blank">Help for this page <img src="http://localhost/rozgarmela/admin/../templates/_system/admin/main/images/question.png" border="0" class="helpicon" /> </a>
+					<form id="langSwitcherForm" method="get" action="">
+						<select name="lang" onchange="location.href='http://localhost/rozgarmela/admin/import-users/?lang='+this.value+'&amp;user_group_id=JobSeeker&amp;file_type=xls&amp;csv_delimiter=semicolon&amp;encodingFromCharset=UTF-8&amp;action=Import'" style="margin-top:5px; width: 200px;">
+													<option value="en" selected="selected">English</option>
+												</select>
+					</form>
+				</div>
+				<div id="messageBox"></div>
+
+				<div id="topGray">
+					<div id="updateInfoBlock">
+						<a href="http://localhost/rozgarmela/admin/update-to-new-version/">New update available</a>
+						<span id="closeUpdateInfoBlock">X</span>
+					</div>
+					<div id="breadCrumbs">
+						<a href="http://localhost/rozgarmela/admin/">Dashboard</a> &#187; <a href="?">Import Users</a>
+					</div>
+					<div id="topRight">
+						Welcome back, admin<br/>
+						<a href="http://localhost/rozgarmela/admin/">Dashboard</a> | <a href="http://localhost/rozgarmela/admin/system/users/logout/">Log out</a>
+					</div>
+					<div id="suggest-feature">
+						<a href="http://ideas.smartjobboard.com" target="_blank">Suggest a Feature</a>
+					</div>
+				</div>
+				
+				<div class="InContent">
+					<div style="margin: 0 215px 0 0">
+									
+					</div>
+					
+<h1>Import Users</h1>
+
+<p class="message">1 users were successfully imported.</p>
+					<div class="clr"><br/></div>
+				</div>
+			
+			</td>
+		</tr>
+		<tr>
+			<td colspan="2">
+				<div id="footer">
+					Copyright &copy; 2013 Powered by <a href="http://www.smartjobboard.com/">SmartJobBoard</a> &#124; <a href="http://wiki.smartjobboard.com/display/sjb42/SmartJobBoard+v4.2+User+Manual">User Manual</a>
+				</div>
+			</td>
+		</tr>
+	</table>
+	
+</body>
+</html>

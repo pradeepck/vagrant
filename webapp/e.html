@@ -1,0 +1,46 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+		"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-US" lang="en-US">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<title>SmartJobBoard Admin Panel</title>
+	<link rel="StyleSheet" type="text/css" href="http://localhost/rozgarmela/admin/../templates/_system/admin/main/images/auth.css"/>
+		<script language="JavaScript" type="text/javascript" src="http://localhost/rozgarmela/system/ext/jquery/jquery.js"></script>
+
+	<script type="text/javascript">$(function () {
+		$('input[name=username]').focus();
+	})</script>
+</head>
+<body>
+	<div id="loginForm">
+		<div id="headerLogo">
+			<img src="http://localhost/rozgarmela/admin/../templates/_system/admin/main/images/authLogo.png" border="0" width="199" height="30"/><br/>
+			<span>SmartJobBoard version 4.2 build 9822</span>
+		</div>
+		<div class="clr"></div>
+		<div id="authFormLogin">
+			<form method="post" action="">
+				<input type="hidden" name="action" value="login" />
+<input type="hidden" name="user_group_id" value="JobSeeker" />
+<input type="hidden" name="file_type" value="xls" />
+<input type="hidden" name="csv_delimiter" value="semicolon" />
+<input type="hidden" name="encodingFromCharset" value="utf8" />
+
+								<label>Username:<br/><input type="text" name="username"  /></label>
+				<label>Password:<br/><input type="password" name="password"   /></label>
+				
+
+				<input type="submit" value="Login" id="loginButton"/>
+			</form>
+
+			<form method="get" action="">
+				<select id="languages" name="lang" onchange="location.href='http://localhost/rozgarmela/admin/import-users/?lang='+this.value+'&amp;user_group_id=JobSeeker&amp;import_file%5Bname%5D=e%3A%2Fprojects%2Fanantinnovation%2Fdata%2Fuseruploaddata.xlsx&amp;import_file%5Bmime%5D=application%2Fvnd.openxmlformats-officedocument.spreadsheetml.sheet&amp;import_file%5Bpostname%5D=import_file&amp;file_type=xls&amp;csv_delimiter=semicolon&amp;encodingFromCharset=utf8&amp;action=Import'">
+									<option value="en" selected="selected">English</option>
+								</select>
+			</form>
+		</div>
+	</div>
+	<div class="clr"></div>
+	<div id="copyright">Copyright 2013 &copy; SmartJobBoard.com All rights reserved</div>
+</body>
+</html>
